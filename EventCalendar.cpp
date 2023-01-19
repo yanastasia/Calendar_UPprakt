@@ -5,10 +5,11 @@
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
+#include <ctime>
 
 using namespace std;
 
-const string MonthNames[12] = {
+const string MONTHNAMES[12] = {
         "January",
         "February",
         "March",
@@ -23,7 +24,7 @@ const string MonthNames[12] = {
         "December"
 };
 
-const string DayNames[7] = {
+const string DAYNAMES[7] = {
     "Monday",
     "Tuesday",
     "Wednesday",
@@ -33,7 +34,7 @@ const string DayNames[7] = {
     "Sunday"
 };
 
-const int monthDays[12] = {
+const int MONTHDAYS[12] = {
     31, 28, 31, 30, 31, 30,
     31, 31, 30, 31, 30, 31,
 };
@@ -44,11 +45,31 @@ public:
     int month;
     int year;
 
-    Date() {}
+    Date() {
+
+        struct tm currtime;
+        time_t now = time(0);
+        localtime_s(&currtime, &now);
+
+        year = currtime.tm_year + 1900; 
+        month = currtime.tm_mon + 1;
+        day = currtime.tm_mday;
+
+    }
 
     Date(string s) {
 
         setDate(s);
+    }
+
+    Date(int d, int m, int y) {
+        setDate(d, m, y);
+    }
+
+    void setDate(int d, int m, int y) {
+        this->day = d;
+        this->month = m;
+        this->year = y;
     }
 
     void setDate(string s) {
@@ -95,7 +116,7 @@ public:
 
         return false;
     }
-    
+
     bool operator==(const Date& rhs) const {
         return year == rhs.year && month == rhs.month && day == rhs.day;
     }
@@ -134,7 +155,7 @@ public:
 
 class Calendar {
 public:
-
+    Date currDate;
     vector<Event> events;
     Calendar() {}
 
@@ -235,7 +256,7 @@ public:
 
     bool validateDate(Date d) {
         if (d.month >= 1 && d.month <= 12) {
-            if (d.day >= 1 && d.day <= monthDays[d.month - 1]) {
+            if (d.day >= 1 && d.day <= MONTHDAYS[d.month - 1]) {
                 return true;
             }
         }
@@ -283,7 +304,7 @@ public:
                 vector<Event>::iterator it;
                 it = find_if(events.begin(), events.end(), hasName(name));
 
-                if (it != events.end()){
+                if (it != events.end()) {
 
                     cout << "An event with that name already exists. Try again. \n";
                     continue;
@@ -376,22 +397,43 @@ public:
 
         cout << "Save to file successful.\n";
     }
+
+    Date getTomorrow(Date today) {
+        int dayT = 0, monthT = 0, yearT = 0;
+
+        dayT = today.getDay() + 1;
+        monthT = today.getMonth();
+        yearT = today.getYear();
+        Date tomorrow(dayT, monthT, yearT);
+
+        if (!validateDate(tomorrow)) {
+            tomorrow.setDate(1, monthT + 1, yearT);
+        }
+
+        if (!validateDate(tomorrow)) {
+            //Happy NYE
+            tomorrow.setDate(1, 1, yearT + 1);
+        }
+
+        return tomorrow;
+    }
+
+    void startMessage() {
+        
+        cout << "Welcome! Today is "<<currDate.getDay()<<" "<<MONTHNAMES[currDate.getMonth()-1]<<" "<<currDate.getYear()<< "\n\n"; // dosredi dnshanj datum i dn 
+        Date tomDate = getTomorrow(currDate);
+        
+        cout << "You have ____ events tomorrow\n\n";
+        cout << " Choose an option: \n";
+        cout << '\t' << "1. Show calendar\n";
+        cout << '\t' << "2. Show schedule\n";
+        cout << '\t' << "3. List events\n";
+        cout << '\t' << "4. Add event\n";
+        cout << '\t' << "5. Remove event\n";
+        cout << '\t' << "6. Set first weekday\n\n";
+        cout << "Enter your choice: ";
+    }
 };
-
-
-void startMessage() {
-    time_t now = time(0);
-    cout << "Welcome! Today is " /* << monthName(4) */ << '\n' << '\n'; // dosredi dnshanj datum i dn 
-    cout << "You have ____ events tomorrow\n";
-    cout << " Choose an option: \n";
-    cout << '\t' << "1. Show calendar\n";
-    cout << '\t' << "2. Show schedule\n";
-    cout << '\t' << "3. List events\n";
-    cout << '\t' << "4. Add event\n";
-    cout << '\t' << "5. Remove event\n";
-    cout << '\t' << "6. Set first weekday\n\n";
-    cout << "Enter your choice: ";
-}
 
 void separator() {
     cout << "-----------------------------------------------------------------------------------------------------------\n";
@@ -403,7 +445,7 @@ int main()
     Calendar c;
     while (true) {
 
-        startMessage();
+        c.startMessage();
         int choice = 0;
         cin >> choice;
         cout << '\n\n';
@@ -425,13 +467,14 @@ int main()
         case 5:
             c.DeleteEvent();
             break;
+
         default:
             c.saveEventsFile(FILENAME);
             break;
         }
-        
+
         separator();
     }
-    
+
     return 0;
 }
