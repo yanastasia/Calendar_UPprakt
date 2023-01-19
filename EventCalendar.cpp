@@ -4,8 +4,39 @@
 #include <vector>
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
+
+const string MonthNames[12] = {
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+};
+
+const string DayNames[7] = {
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+};
+
+const int monthDays[12] = {
+    31, 28, 31, 30, 31, 30,
+    31, 31, 30, 31, 30, 31,
+};
 
 struct Date {
 public:
@@ -51,10 +82,24 @@ public:
         return ss.str();
     }
 
-    const int monthDays[12] = {
-        31, 28, 31, 30, 31, 30,
-        31, 31, 30, 31, 30, 31,
-    };
+    bool operator< (const Date& rhs) const {
+        if (year < rhs.year) {
+            return true;
+        }
+        else if (month < rhs.month) {
+            return true;
+        }
+        else if (day < rhs.day) {
+            return true;
+        }
+
+        return false;
+    }
+    
+    bool operator==(const Date& rhs) const {
+        return year == rhs.year && month == rhs.month && day == rhs.day;
+    }
+
 };
 
 class Event {
@@ -71,14 +116,26 @@ public:
         this->endDate.setDate(end);
     }
 
+    bool operator<(const Event& rhs) const {
+        if (startDate < rhs.startDate) {
+            return true;
+        }
+        else if (startDate == rhs.startDate) {
+            return name < rhs.name;
+        }
+
+        return false;
+    }
+
     string eventToString() const {
         return name + "|" + startDate.dateToString() + "|" + endDate.dateToString();
     }
 };
 
 class Calendar {
-    vector<Event> events;
 public:
+
+    vector<Event> events;
     Calendar() {}
 
 
@@ -113,6 +170,43 @@ public:
         rfile.close();
     }
 
+    void load(string fileName) {
+
+        vector<string> row;
+        string line, part;
+
+        ifstream rfile(fileName);
+
+        //Calendar cal;
+
+        while (!rfile.eof()) {
+            Event e;
+            row.clear();
+
+            getline(rfile, line);
+            stringstream ss(line);
+
+            while (getline(ss, part, '|')) {
+                row.push_back(part);
+            }
+
+            e.name = row[0];
+
+            e.startDate.setDate(row[1]);
+            e.endDate.setDate(row[2]);
+
+            events.push_back(e);
+        }
+
+        rfile.close();
+        return;
+    }
+
+    void sortEvents() {
+        sort(events.begin(), events.end());
+    }
+
+
     void ListEvents() {
 
         if (events.empty()) {
@@ -120,6 +214,7 @@ public:
             return;
         }
 
+        sortEvents();
         cout << "You have the following events:\n";
         for (int i = 0; i < events.size(); ++i) {
             cout << i + 1 << ".";
@@ -140,7 +235,7 @@ public:
 
     bool validateDate(Date d) {
         if (d.month >= 1 && d.month <= 12) {
-            if (d.day >= 1 && d.day <= d.monthDays[d.month - 1]) {
+            if (d.day >= 1 && d.day <= monthDays[d.month - 1]) {
                 return true;
             }
         }
@@ -163,18 +258,40 @@ public:
         return true;
     }
 
+    struct hasName {
+        string& e_name;
+        hasName(string& name) : e_name(name) {}
+        bool operator() (const Event& e) const {
+            return (e.name) == e_name;
+        }
+    };
+
     void CreateEvent() {
         string name, sDate, eDate;
         Date testSDate, testEDate;
 
-        cout << "Enter name: ";
-
-        cin.ignore();
-        getline(cin, name);
-        cout << '\n';
-
         //User input with validation
         while (true) {
+            cin.ignore();
+
+            while (true) {
+                cout << "Enter name: ";
+
+                getline(cin, name);
+                cout << '\n';
+
+                vector<Event>::iterator it;
+                it = find_if(events.begin(), events.end(), hasName(name));
+
+                if (it != events.end()){
+
+                    cout << "An event with that name already exists. Try again. \n";
+                    continue;
+                }
+                else {
+                    break;
+                }
+            }
 
             while (true) {
 
@@ -230,14 +347,6 @@ public:
         }
     }
 
-    struct hasName {
-        string& e_name;
-        hasName(string& name) : e_name(name) {}
-        bool operator() (const Event& e) const {
-            return (e.name) == e_name;
-        }
-    };
-
     void DeleteEvent() {
         string n;
         cout << "Enter name: ";
@@ -252,7 +361,7 @@ public:
             cout << pos << endl; // !! figure it out
         }
         else
-            cout << "Event not found.\n\n";
+            cout << "Element not found.\n\n";
     }
 
     void saveEventsFile(string filename) {
@@ -297,7 +406,7 @@ int main()
         startMessage();
         int choice = 0;
         cin >> choice;
-        cout << "\n\n";
+        cout << '\n\n';
 
         const string FILENAME = "events.txt";
 
@@ -320,9 +429,9 @@ int main()
             c.saveEventsFile(FILENAME);
             break;
         }
-
+        
         separator();
     }
-
+    
     return 0;
 }
