@@ -81,7 +81,8 @@ class Calendar {
 public:
     Calendar() {}
 
-    void loadEventsFile() {
+
+    void LoadEventsFile() {
 
         events.clear();
 
@@ -112,10 +113,18 @@ public:
         rfile.close();
     }
 
-    void listEvents() {
+    void ListEvents() {
+
+        if (events.empty()) {
+            cout << "There are currently no events.\n\n";
+            return;
+        }
+
+        cout << "You have the following events:\n";
         for (int i = 0; i < events.size(); ++i) {
-            cout << setw(4) << i + 1 << ".";
+            cout << i + 1 << ".";
             cout << events[i].name << '\t';
+
             string start = events[i].startDate.dateToString();
             string end = events[i].endDate.dateToString();
 
@@ -125,6 +134,8 @@ public:
             }
             cout << "(" << start << " - " << end << ")" << '\n';
         }
+        cout << "\n\n";
+        return;
     }
 
     bool validateDate(Date d) {
@@ -138,30 +149,32 @@ public:
     }
 
     bool validateEventLength(Date d1, Date d2) {
-        if (d1.year <= d2.year) {
-            if (d1.month <= d2.month) {
-                if (d1.day <= d2.day) {
-                    return true;
-                }
-            }
+
+        if (d1.year > d2.year) {
+            return false;
+        }
+        if (d1.month > d2.month) {
+            return false;
+        }
+        if (d1.day > d2.day) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     void CreateEvent() {
         string name, sDate, eDate;
         Date testSDate, testEDate;
 
-        bool validInput = false;
-
         cout << "Enter name: ";
 
+        cin.ignore();
         getline(cin, name);
         cout << '\n';
 
         //User input with validation
-        while (!validInput) {
+        while (true) {
 
             while (true) {
 
@@ -170,7 +183,7 @@ public:
                 cout << '\n';
 
                 if (sDate.length() != 10) {
-                    cout << "Invalid format! Try again." << '\n';
+                    cout << "Invalid format! Try again.\n";
                     continue;
                 }
 
@@ -180,7 +193,7 @@ public:
                     break;
                 }
                 else {
-                    cout << "Invalid input! Try again." << '\n';
+                    cout << "Invalid input! Try again.\n";
                 }
             }
 
@@ -190,7 +203,7 @@ public:
                 cout << '\n';
 
                 if (eDate.length() != 10) {
-                    cout << "Invalid format! Try again." << '\n';
+                    cout << "Invalid format! Try again.\n";
                     continue;
                 }
 
@@ -200,22 +213,46 @@ public:
                     break;
                 }
                 else {
-                    cout << "Invalid input! Try again." << '\n';
+                    cout << "Invalid input! Try again.\n";
                 }
             }
 
-            if (validateEventLength(testEDate, testSDate)) {
-                validInput = true;
+            if (validateEventLength(testSDate, testEDate)) {
 
                 Event e(name, sDate, eDate);
                 events.push_back(e);
 
-                cout << "Event added successfuly!" << '\n';
+                cout << "Event added successfuly!\n\n";
+                return;
             }
-            else if (!validateEventLength(testSDate, testEDate)) {
-                cout << "End date is before start date! Try again." << '\n';
-            }
+
+            cout << "End date is before start date! Try again.\n";
         }
+    }
+
+    struct hasName {
+        string& e_name;
+        hasName(string& name) : e_name(name) {}
+        bool operator() (const Event& e) const {
+            return (e.name) == e_name;
+        }
+    };
+
+    void DeleteEvent() {
+        string n;
+        cout << "Enter name: ";
+        cin.ignore();
+        getline(cin, n);
+
+        vector<Event>::iterator it;
+        it = find_if(events.begin(), events.end(), hasName(n));
+        if (it != events.end())
+        {
+            int pos = distance(events.begin(), it);
+            cout << pos << endl; // !! figure it out
+        }
+        else
+            cout << "Event not found.\n\n";
     }
 
     void saveEventsFile(string filename) {
@@ -228,7 +265,7 @@ public:
 
         file.close();
 
-        cout << "Save to file successful." << endl;
+        cout << "Save to file successful.\n";
     }
 };
 
@@ -236,38 +273,56 @@ public:
 void startMessage() {
     time_t now = time(0);
     cout << "Welcome! Today is " /* << monthName(4) */ << '\n' << '\n'; // dosredi dnshanj datum i dn 
-    cout << "You have ____ events tomorrow" << '\n' << '\n';
-    cout << " Choose an option: " << '\n';
-    cout << '\t' << "1. Show calendar" << '\n';
-    cout << '\t' << "2. Show schedule" << '\n';
-    cout << '\t' << "3. List events" << '\n';
-    cout << '\t' << "4. Add event" << '\n';
-    cout << '\t' << "5. Remove event" << '\n';
-    cout << '\t' << "6. Set first weekday" << '\n' << '\n';
+    cout << "You have ____ events tomorrow\n";
+    cout << " Choose an option: \n";
+    cout << '\t' << "1. Show calendar\n";
+    cout << '\t' << "2. Show schedule\n";
+    cout << '\t' << "3. List events\n";
+    cout << '\t' << "4. Add event\n";
+    cout << '\t' << "5. Remove event\n";
+    cout << '\t' << "6. Set first weekday\n\n";
     cout << "Enter your choice: ";
 }
+
+void separator() {
+    cout << "-----------------------------------------------------------------------------------------------------------\n";
+    return;
+}
+
 int main()
 {
-    /*startMessage();
-    int choice = 0;
-    cin >> choice;*/
+    Calendar c;
+    while (true) {
 
-    const string FILENAME = "events.txt";
+        startMessage();
+        int choice = 0;
+        cin >> choice;
+        cout << "\n\n";
 
-    ifstream ifs(FILENAME);
-    if (!ifs.is_open()) {
-        ofstream outfile(FILENAME); // create file 
+        const string FILENAME = "events.txt";
+
+        ifstream ifs(FILENAME);
+        if (!ifs.is_open()) {
+            ofstream outfile(FILENAME); // create file 
+        }
+
+        switch (choice) {
+        case 3:
+            c.ListEvents();
+            break;
+        case 4:
+            c.CreateEvent();
+            break;
+        case 5:
+            c.DeleteEvent();
+            break;
+        default:
+            c.saveEventsFile(FILENAME);
+            break;
+        }
+
+        separator();
     }
 
-    Calendar c;
-    c.loadEventsFile();
-
-    //c.listEvents();
-
-    c.CreateEvent();
-
-    c.listEvents();
-
-    c.saveEventsFile(FILENAME);
     return 0;
 }
