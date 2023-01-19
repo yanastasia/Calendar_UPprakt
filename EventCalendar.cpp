@@ -11,7 +11,29 @@ public:
     int month;
     int year;
 
-    Date(){}
+    Date() {}
+
+    void setDate(string s) {
+        vector<int> parts;
+        string part;
+
+        stringstream ss(s);
+        while (getline(ss, part, '/')) {
+            parts.push_back(stoi(part));
+        }
+
+        this->day = parts[0];
+        this->month = parts[1];
+        this->year = parts[2];
+    }
+
+    //constructor for string to Date
+    Date(string s) {
+
+        setDate(s);
+    }
+
+
 };
 
 class Event {
@@ -21,68 +43,58 @@ public:
     Date startDate;
     Date endDate;
 
-    Event(){}
+    Event() {}
+
+
 };
 
 class Calendar {
 public:
 
     vector<Event> events;
+    Calendar() {}
 
-    Calendar(){}
+    void load(string fileName) {
+
+        vector<string> row;
+        string line, part;
+
+        ifstream rfile(fileName);
+
+        //Calendar cal;
+
+        while (!rfile.eof()) {
+            Event e;
+            row.clear();
+
+            getline(rfile, line);
+            stringstream ss(line);
+
+            while (getline(ss, part, '|')) {
+                row.push_back(part);
+            }
+
+            e.name = row[0];
+            e.startDate.setDate(row[1]);
+            e.endDate.setDate(row[2]);
+
+            events.push_back(e);
+            //raboti stored in vector
+                cout << "Event: " << e.name << " from " << e.startDate.day << "-" << e.startDate.month << "-" << e.startDate.year << " to " << e.endDate.day << "-" << e.endDate.month << "-" << e.endDate.year << endl;
+        }
+
+        rfile.close();
+    }
 
 };
 
-Date stringToDate(string s) {
-    Date date;
 
-    vector<int> parts;
-    string part;
-
-    stringstream ss(s);
-    while(getline(ss, part, '/')) {
-        parts.push_back(stoi(part));
-    }
-
-    date.day = parts[0];
-    date.month = parts[1];
-    date.year = parts[2];
-
-    return date;
-}
 
 
 int main() {
 
-    vector<string> row;
-    string line, part;
-
-    ifstream rfile("events.txt");
-
-    Calendar cal;
-
-    while (!rfile.eof()) {
-        Event e;
-        row.clear();
-
-        getline(rfile, line);
-        stringstream ss(line);
-
-        while (getline(ss, part, '|')) {
-            row.push_back(part);
-        }
-        
-        e.name = row[0];
-        e.startDate = stringToDate(row[1]);
-        e.endDate = stringToDate(row[2]);
-
-        cal.events.push_back(e);
-
-        //cout << "Event: " << e.name << " from " << e.startDate.day<<"-"<<e.startDate.month<<"-"<<e.startDate.year << " to " << e.endDate.day<<"-"<<e.endDate.month<<"-"<<e.endDate.year<<endl;
-    }
-
-    
-    rfile.close();
+    Calendar c;
+    c.load("events.txt");
 
     return 0;
 }
