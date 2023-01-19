@@ -50,6 +50,11 @@ public:
         ss << day << '/' << month << '/' << year;
         return ss.str();
     }
+
+    const int monthDays[12] = {
+        31, 28, 31, 30, 31, 30,
+        31, 31, 30, 31, 30, 31,
+    };
 };
 
 class Event {
@@ -102,8 +107,6 @@ public:
             e.endDate.setDate(row[2]);
 
             events.push_back(e);
-
-            //cout << "You have: " << e.name << " from " << e.startDate.day << "-" << e.startDate.month << "-" << e.startDate.year << " to " << e.endDate.day << "-" << e.endDate.month << "-" << e.endDate.year << endl;
         }
 
         rfile.close();
@@ -111,7 +114,7 @@ public:
 
     void listEvents() {
         for (int i = 0; i < events.size(); ++i) {
-            cout << setw(4) << i << ".";
+            cout << setw(4) << i + 1 << ".";
             cout << events[i].name << '\t';
             string start = events[i].startDate.dateToString();
             string end = events[i].endDate.dateToString();
@@ -124,9 +127,100 @@ public:
         }
     }
 
-    void saveEventsFile() {
+    bool validateDate(Date d) {
+        if (d.month >= 1 && d.month <= 12) {
+            if (d.day >= 1 && d.day <= d.monthDays[d.month - 1]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool validateEventLength(Date d1, Date d2) {
+        if (d1.year <= d2.year) {
+            if (d1.month <= d2.month) {
+                if (d1.day <= d2.day) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    void CreateEvent() {
+        string name, sDate, eDate;
+        Date testSDate, testEDate;
+
+        bool validInput = false;
+
+        cout << "Enter name: ";
+
+        getline(cin, name);
+        cout << '\n';
+
+        //User input with validation
+        while (!validInput) {
+
+            while (true) {
+
+                cout << "Enter start date (DD/MM/YYYY): ";
+                cin >> sDate;
+                cout << '\n';
+
+                if (sDate.length() != 10) {
+                    cout << "Invalid format! Try again." << '\n';
+                    continue;
+                }
+
+                testSDate.setDate(sDate);
+
+                if (validateDate(testSDate)) {
+                    break;
+                }
+                else {
+                    cout << "Invalid input! Try again." << '\n';
+                }
+            }
+
+            while (true) {
+                cout << "Enter end date (DD/MM/YYYY): ";
+                cin >> eDate;
+                cout << '\n';
+
+                if (eDate.length() != 10) {
+                    cout << "Invalid format! Try again." << '\n';
+                    continue;
+                }
+
+                testEDate.setDate(eDate);
+
+                if (validateDate(testEDate)) {
+                    break;
+                }
+                else {
+                    cout << "Invalid input! Try again." << '\n';
+                }
+            }
+
+            if (validateEventLength(testEDate, testSDate)) {
+                validInput = true;
+
+                Event e(name, sDate, eDate);
+                events.push_back(e);
+
+                cout << "Event added successfuly!" << '\n';
+            }
+            else if (!validateEventLength(testSDate, testEDate)) {
+                cout << "End date is before start date! Try again." << '\n';
+            }
+        }
+    }
+
+    void saveEventsFile(string filename) {
         ofstream file;
-        file.open("events.txt", ios::app);
+        file.open(filename, ios::app);
 
         for (auto e : events) {
             file << e.eventToString() << '\n';
@@ -134,14 +228,14 @@ public:
 
         file.close();
 
-        cout << "Save to file success." << endl;
+        cout << "Save to file successful." << endl;
     }
 };
 
 
 void startMessage() {
     time_t now = time(0);
-    cout << "Welcome! Today is " /* << monthName(4) */ << '\n' << '\n'; //  work it out for today's date and day
+    cout << "Welcome! Today is " /* << monthName(4) */ << '\n' << '\n'; // dosredi dnshanj datum i dn 
     cout << "You have ____ events tomorrow" << '\n' << '\n';
     cout << " Choose an option: " << '\n';
     cout << '\t' << "1. Show calendar" << '\n';
@@ -152,21 +246,28 @@ void startMessage() {
     cout << '\t' << "6. Set first weekday" << '\n' << '\n';
     cout << "Enter your choice: ";
 }
-
 int main()
 {
-    startMessage();
+    /*startMessage();
     int choice = 0;
-    cin >> choice;
+    cin >> choice;*/
 
-    ifstream ifs("events.txt");
+    const string FILENAME = "events.txt";
+
+    ifstream ifs(FILENAME);
     if (!ifs.is_open()) {
-        ofstream outfile("events.txt"); // create file
+        ofstream outfile(FILENAME); // create file 
     }
 
     Calendar c;
     c.loadEventsFile();
 
+    //c.listEvents();
+
+    c.CreateEvent();
+
     c.listEvents();
+
+    c.saveEventsFile(FILENAME);
     return 0;
 }
