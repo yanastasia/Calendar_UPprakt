@@ -10,16 +10,21 @@ using namespace std;
 class Calendar {
     Date currDate;
     vector<Event> events;
+    bool startMonday = true;
 public:
 
     Calendar();
     
     static const string MONTHNAMES[12];
     static const string DAYNAMES[7];
-    static const int MONTHDAYS[12];
+    int monthDays(int month, int year);
 
-    void LoadEventsFile(); //Load events from event file
-    void LoadEventsFile(string fileName);
+    Date getCurrDate();
+    string getStartDay();
+
+    void setStartDay(string day);
+
+    void loadEventsFile();
 
     void sortEvents(); //Sort events by date or name
 
@@ -30,14 +35,23 @@ public:
 
     struct hasName; //helper for searching
 
-    void CreateEvent(); //User creating an event
+    void CreateEventW(); //User creating an event
     void DeleteEvent(); //User deleting and event
+
+    void InputDate();
+    int FirstDayOfMonth_Monday(int year, int month);
+    int FirstDayOfMonth_Sunday(int year, int month, int day);
+    void generateCalendar(Date cDate);
+
+    void ChangeFirstWeekDay();
 
     void saveEventsFile(string filename); //Save events to file
 
     Date getTomorrow(Date today); //calculating tomorrow's date
 
-    void startMessage(); //start menu
+    void startMessage(); // at start
+
+    void StartMenu(); //menu
     void separator();
     void Run(string FILENAME); //for running the program
 };
