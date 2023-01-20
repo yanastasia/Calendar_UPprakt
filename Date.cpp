@@ -35,17 +35,35 @@ void Date::setDate(int d, int m, int y) {
 
 void Date::setDate(string s) {
 
-    stringstream ss(s);
-    std::vector<int> parts;
+    int parts[3];
     string p;
 
+    stringstream ss(s);
+    int i = 0;
     while (getline(ss, p, '/')) {
-        parts.push_back(stoi(p));
+        parts[i] = stoi(p);
+        i++;
     }
 
     this->day = parts[0];
     this->month = parts[1];
     this->year = parts[2];
+}
+
+void Date::setMonthYear(string s) {
+    int parts[2];
+    string p;
+
+    stringstream ss(s);
+    int i = 0;
+    while (getline(ss, p, '/')) {
+        parts[i] = stoi(p);
+        i++;
+    }
+
+    this->day = 1;
+    this->month = parts[0];
+    this->year = parts[1];
 }
 
 int Date::getDay() {
