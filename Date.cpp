@@ -100,3 +100,40 @@ bool Date::operator< (const Date& rhs) const {
 bool Date::operator==(const Date& rhs) const {
     return year == rhs.year && month == rhs.month && day == rhs.day;
 }
+
+bool Date::operator> (const Date& rhs) const {
+    if (year > rhs.year) {
+        return true;
+    }
+    else if (month > rhs.month) {
+        return true;
+    }
+    else if (day > rhs.day) {
+        return true;
+    }
+
+    return false;
+}
+
+bool Date::operator<=(const Date& rhs) const {
+    if (year <= rhs.year) {
+        if (month <= rhs.month) {
+            if (day <= rhs.day) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Date::operator>=(const Date& rhs) const{
+    if (year >= rhs.year) {
+        if (month >= rhs.month) {
+            if (day >= rhs.day) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
