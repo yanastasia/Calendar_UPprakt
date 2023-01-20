@@ -15,8 +15,10 @@ int main()
     if (!ifs.is_open()) {
         ofstream outfile(FILENAME); // create file 
     }
+
     c.loadEventsFile();
     c.Run(FILENAME);
+    c.saveEventsFile(FILENAME);
 
     return 0;
 }
