@@ -33,6 +33,9 @@ public:
 
     bool operator< (const Date& rhs) const;
     bool operator==(const Date& rhs) const;
+    bool operator> (const Date& rhs) const;
+    bool operator<=(const Date& rhs) const;
+    bool operator>=(const Date& rhs) const;
 };
 
 #endif
