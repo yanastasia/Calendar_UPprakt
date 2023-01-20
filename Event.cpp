@@ -10,14 +10,7 @@ Event::Event(string name, string start, string end) {
 }
 
 bool Event::operator<(const Event& rhs) const {
-    if (startDate < rhs.startDate) {
-        return true;
-    }
-    else if (startDate == rhs.startDate) {
-        return name < rhs.name;
-    }
-
-    return false;
+    return (startDate < rhs.startDate) || (startDate == rhs.startDate && name < rhs.name);
 }
 
 string Event::eventToString() const {
