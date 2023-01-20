@@ -8,8 +8,11 @@
 #include <algorithm>
 #include <ctime>
 #include<windows.h>
+#include<map>
 #include "Date.h"
 #include "Event.h"
+
+using namespace std;
 
 Calendar::Calendar() {}
 
@@ -29,6 +32,16 @@ const string Calendar::MONTHNAMES[12] = {
 };
 
 const string Calendar::DAYNAMES[7] = {
+    "Mo",
+    "Tu",
+    "We",
+    "Th",
+    "Fr",
+    "Sa",
+    "Su"
+};
+
+const string Calendar::DAYNAMESFULL[7] = {
     "Monday",
     "Tuesday",
     "Wednesday",
@@ -112,7 +125,6 @@ void Calendar::loadEventsFile() {
     string line, part, junk;
 
     ifstream rfile("events.txt");
-    //getline(rfile, junk);
 
     while (!rfile.eof()) {
         Event e;
@@ -133,13 +145,11 @@ void Calendar::loadEventsFile() {
         if (validateDate(e.startDate) && validateDate(e.endDate) && validateEventLength(e.startDate, e.endDate)) {
             events.push_back(e);
         }
-
     }
 
     rfile.close();
-    cout << "File loaded successfuly!\n\n";
+    //cout << "File loaded successfuly!\n\n";
 }
-
 void Calendar::sortEvents() {
     sort(events.begin(), events.end());
 }
@@ -151,20 +161,17 @@ void Calendar::ListEvents() {
         return;
     }
 
-    sortEvents();
+    //sortEvents();
     cout << "You have the following events:\n";
     for (int i = 0; i < events.size(); ++i) {
         cout << i + 1 << ".";
         cout << events[i].name << '\t';
 
-        string start = events[i].startDate.dateToString();
-        string end = events[i].endDate.dateToString();
-
-        if (start == end) {
-            cout << "(" << start << ")" << '\n';
+        if (events[i].startDate.dateToString() == events[i].endDate.dateToString()) {
+            cout << "(" << events[i].startDate.dateToString() << ")" << '\n';
             continue;
         }
-        cout << "(" << start << " - " << end << ")" << '\n';
+        cout << "(" << events[i].startDate.dateToString() << " - " << events[i].endDate.dateToString() << ")" << '\n';
     }
     cout << "\n\n";
     return;
@@ -202,6 +209,99 @@ struct Calendar::hasName {
         return (e.name) == e_name;
     }
 };
+
+Date Calendar::inputMonthYear() {
+    string iDate;
+    Date inputDate;
+    while (true) {
+        cout << "Enter month (MM/YYYY): ";
+
+        cin >> iDate;
+        cout << '\n';
+        if (iDate.length() != 7) {
+            cout << "Invalid format! Try again.\n";
+            continue;
+        }
+
+        inputDate.setMonthYear(iDate);
+
+        if (validateDate(inputDate)) {
+            break;
+        }
+        else {
+            cout << "Invalid input! Try again.\n";
+        }
+    }
+
+    return inputDate;
+}
+
+multimap<int, Event> Calendar::vecToMM_MonthYear(int y, int m) {
+    int year = y;
+    int month = m;
+
+    multimap<int, Event> eventsMap;
+    for (int j = 1; j < monthDays(month, year); ++j) {
+        Date targetDate(j, month, year);
+        for (int i = 0; i < events.size(); ++i) {
+            if ((events[i].startDate <= targetDate) && (events[i].endDate >= targetDate)) {
+                eventsMap.insert(pair<int, Event>(j, events[i]));
+            }
+        }
+    }
+
+    return eventsMap;
+}
+
+int Calendar::eventsOnDate(Date d) {
+    int eventCount = 0;
+    for (int i = 0; i < events.size(); ++i) {
+        if ((events[i].startDate <= d) && (events[i].endDate >= d)) {
+            ++eventCount;
+        }
+    }
+    
+    return eventCount;
+}
+
+void Calendar::ShowSchedule() {
+    Date inputDate = inputMonthYear();
+    int year = inputDate.getYear();
+    int month = inputDate.getMonth();
+
+    multimap<int, Event> eventsOTM = vecToMM_MonthYear(year, month);
+
+    cout << MONTHNAMES[month - 1] << " " << year << '\n';
+    cout << "----------\n";
+
+    for (int j = 1; j < monthDays(month, year); ++j) {
+        if (eventsOTM.count(j)) {
+            string day;
+            if (FirstDayOfMonth_Sunday(year, month, j) == 0) {
+                day = "Su";
+            }
+            else {
+                day = DAYNAMES[FirstDayOfMonth_Sunday(year, month, j)-1];
+            }
+            
+
+            cout << day << ", " << j << '\t';
+            auto itr1 = eventsOTM.lower_bound(j);
+            auto itr2 = eventsOTM.upper_bound(j);
+            while (itr1 != itr2) {
+                
+                if ((itr1->first == j) && (itr1 == eventsOTM.lower_bound(j))) { 
+                    cout << "  " << itr1->second.name << endl;
+                }
+                else if (itr1->first == j) { 
+                    cout << setw(14) << itr1->second.name << endl;
+                }
+                itr1++;
+            }
+        }
+    }
+
+}
 
 void Calendar::CreateEventW() {
     string name, sDate, eDate;
@@ -305,33 +405,6 @@ void Calendar::DeleteEvent() {
     }
 }
 
-void Calendar::InputDate() {
-    string iDate;
-    Date inputDate;
-
-    while (true) {
-        cout << "Enter month (MM/YYYY): ";
-
-        cin >> iDate;
-        cout << '\n';
-        if (iDate.length() != 7) {
-            cout << "Invalid format! Try again.\n";
-            continue;
-        }
-
-        inputDate.setMonthYear(iDate);
-
-        if (validateDate(inputDate)) {
-            break;
-        }
-        else {
-            cout << "Invalid input! Try again.\n";
-        }
-    }
-
-    generateCalendar(inputDate);
-}
-
 int Calendar::FirstDayOfMonth_Monday(int year, int month)
 {
     int t[12] = { 0,3,2,5,0,3,5,1,4,6,2,4 };
@@ -350,50 +423,83 @@ int Calendar::FirstDayOfMonth_Sunday(int year, int month, int day)
     return y;
 }
 
-void Calendar::generateCalendar(Date cDate) {
+void Calendar::generateCalendar() {
+    Date cDate = inputMonthYear();
     int year = cDate.getYear();
     int month = cDate.getMonth();
     int day = 1;
 
-    cout << setw(14) << MONTHNAMES[month - 1] << " " << year << '\n';
+    cout << setw(28) << MONTHNAMES[month - 1] << " " << year << '\n';
 
     int startingDay;
     int dayCount = monthDays(month, year);
+
+    const int W = 9;
 
     if (getStartDay() == "Monday") {
         startingDay = FirstDayOfMonth_Monday(year, month);
 
         //Print all the startingDay days Mon-Sun 
         for (int i = 0; i < 7; ++i) {
-            cout << DAYNAMES[i] << setw(4);
+            cout << DAYNAMES[i] << setw(W);
         }
         cout << '\n';
+
+        //Print and empty space if the day doesn't have a corresponding day 
+        for (int x = 0; x < startingDay; ++x) {
+            cout << setw(2 * W + 1);
+        }
     }
 
     else if (getStartDay() == "Sunday") {
         startingDay = FirstDayOfMonth_Sunday(year, month, day);
 
         //Print all the startingDay days Sun-Sat
-        cout << DAYNAMES[6] << setw(4);
+        cout << DAYNAMES[6] << setw(W);
         for (int i = 0; i < 6; ++i) {
-            cout << DAYNAMES[i] << setw(4);
+            cout << DAYNAMES[i] << setw(W);
         }
         cout << '\n';
-    }
 
-    //Print and empty space if the day doesn't have a corresponding day 
-    for (int x = 0; x < startingDay; ++x) {
-        cout << "    ";
+        //Print and empty space if the day doesn't have a corresponding day 
+        for (int x = 0; x < startingDay; ++x) {
+            cout << "         ";
+        }
     }
-
 
     //Print the date corresponding with the day 
     for (int d = 0; d < dayCount; ++d) {
-        if (d < 9)
-
-            cout << "0" << d + 1 << "  ";
-        else
-            cout << d + 1 << "  ";
+        Date sample(d, month, year);
+        if (d < 8) {
+            cout << "0" << d + 1;
+            if (eventsOnDate(sample)) {
+                cout << " (" << eventsOnDate(sample) << ")";
+                cout << setw(4);
+            }
+            else {
+                cout << setw(8);
+            }
+        }
+        else if (d == 8) { //aesthetic purposes
+            cout << "0" << d + 1;
+            if (eventsOnDate(sample)) {
+                cout << " (" << eventsOnDate(sample) << ")";
+                cout << setw(5);
+            }
+            else {
+                cout << setw(9);
+            }
+        }
+        else {
+            cout << d + 1;
+            if (eventsOnDate(sample)) {
+                cout << " (" << eventsOnDate(sample) << ")";
+                cout << setw(5);
+            }
+            else {
+                cout << setw(9);
+            }
+        }
         ++startingDay;
         if (startingDay == 7) {
             startingDay = 0;
@@ -434,7 +540,7 @@ void Calendar::saveEventsFile(string filename) {
 
     file.close();
 
-    cout << "Save to file successful.\n";
+    //cout << "Save to file successful.\n";
 }
 
 Date Calendar::getTomorrow(Date today) {
@@ -458,11 +564,18 @@ Date Calendar::getTomorrow(Date today) {
 }
 
 void Calendar::startMessage() {
+    string day = DAYNAMESFULL[FirstDayOfMonth_Sunday(currDate.getYear(), currDate.getMonth(), currDate.getDay())-1];
 
-    cout << "Welcome! Today is " << currDate.getDay() << " " << MONTHNAMES[currDate.getMonth() - 1] << " " << currDate.getYear() << "\n\n"; // dosredi dnshanj datum i dn 
-    Date tomDate = getTomorrow(currDate);
+    cout << "Welcome! Today is " << day<<", "<< currDate.getDay() << " " << MONTHNAMES[currDate.getMonth() - 1] << " " << currDate.getYear() << "\n\n";
 
-    cout << "You have ____ events tomorrow\n\n";
+    if (eventsOnDate(currDate)) {
+        cout << "You have "<< eventsOnDate(currDate)<<" events today.\n\n";
+    }
+    else {
+        Date tomDate = getTomorrow(currDate);
+        cout << "You have " << eventsOnDate(tomDate) << " events tomorrow.\n\n";
+    }
+
 
 }
 
@@ -493,10 +606,10 @@ void Calendar::Run(string FILENAME) {
 
         switch (choice) {
         case 1:
-            InputDate();
+            generateCalendar();
             break;
         case 2:
-            //ShowSchedule();
+            ShowSchedule();
             break;
         case 3:
             ListEvents();
@@ -511,7 +624,8 @@ void Calendar::Run(string FILENAME) {
             ChangeFirstWeekDay();
             break;
         default:
-            saveEventsFile(FILENAME);
+            cout << "Invalid input!";
+            return;
             break;
         }
 
@@ -526,7 +640,7 @@ void Calendar::Run(string FILENAME) {
         cout << "\n";
 
         if (choice != 0) {
-            saveEventsFile(FILENAME);
+            
             return;
         }
 
