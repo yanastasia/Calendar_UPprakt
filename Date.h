@@ -1,10 +1,13 @@
 #ifndef DATE_H
 #define DATE_H
-#include <ctime>
-#include <string>
-#include <vector>
-#include <sstream>
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#include <ctime>
 using namespace std;
 
 class Date {
@@ -20,6 +23,7 @@ public:
 
     void setDate(int d, int m, int y);
     void setDate(string s);
+    void setMonthYear(string s);
 
     int getDay();
     int getMonth();
